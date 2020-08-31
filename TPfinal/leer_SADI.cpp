@@ -51,6 +51,10 @@ void leer_barras(vector <string> &SADI, set <string> &set_barras, vector <BARRA>
 			string b = SADI[pos].substr(0,6);
 			set_barras.insert(b);
 			string c = SADI[pos].substr(8,12);
+      forn(i,12) {
+        if(c[i] == ' ') c[i]='_';
+        if(c[i] >= '0' && c[i] <= '9') c[i] = '_';
+      }
 			num_to_name[b] = c;
 			id_to_pos[b] = (int)(barras.size());
 			barras.pb({b,c,start,start});
@@ -157,6 +161,7 @@ int main()
 	FIN;
 	
 	freopen("SADI", "r", stdin);
+  freopen("SADI_REMIX", "w", stdout);
 	vector <string> SADI;
 	set <string> set_barras;
 	vector <BARRA> barras;
@@ -175,17 +180,20 @@ int main()
 	cout << barras.size() << "\n";
 	for(BARRA u : barras)
 	{
-		cout << u.id << " " << u.name << " " << u.PL << " " << u.Pgen << "\n";
+		//cout << u.id << " " << u.name << " " << u.PL << " " << u.Pgen << "\n";
+    cout << u.name << " " << u.PL << " " << u.Pgen << " SI\n";
 	}
 	cout << lineas.size() << "\n";
 	for(LINEA u : lineas)
 	{
-		cout << num_to_name[u.a] << " " << num_to_name[u.b] << " " << u.Pmax << "\n";
+		//~ cout << num_to_name[u.a] << " " << num_to_name[u.b] << " " << u.Pmax << "\n";
+    cout << num_to_name[u.a] << " " << num_to_name[u.b] << " " << u.Pmax << " SI\n";
 	}
 	cout << gen_extra.size() << "\n";
 	for(BARRA u : gen_extra)
 	{
-		cout << num_to_name[u.id] << " " << num_to_name[u.name] << " " << u.Pgen << "\n";
+		//~ cout << num_to_name[u.id] << " " << num_to_name[u.name] << " " << u.Pgen << "\n";
+    cout << num_to_name[u.name] << " " << u.Pgen << "\n";
 	}
 	
     return 0;
