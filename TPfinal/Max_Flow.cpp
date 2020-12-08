@@ -19,6 +19,7 @@ typedef long long ll;
 
 int sumidero;
 int demanda = 0, gen_max = 0, gen_y_ext = 0, cap_lineas = 0;
+int total_barras;
 
 struct LINEA
 {
@@ -29,7 +30,7 @@ struct LINEA
 
 struct BARRA
 {
-	string nombre;
+	string nombre, id;
 	int generacion, PL;
 	string estado;	
 };
@@ -38,15 +39,16 @@ void leer_barras(vector <BARRA> &barra)
 {
 	int n;
 	cin >> n;
+  total_barras = n;
 	forn(i,n)
 	{
-		string nombre, estado;
+		string nombre, id, estado;
     double aux1, aux2;
 		int generacion, PL;
-		cin >> nombre >> aux1 >> aux2 >> estado;
+		cin >> nombre >> id >> aux1 >> aux2 >> estado;
     PL = (int)(floor(aux1));
     generacion = (int)(floor(aux2));
-		barra.pb({nombre,generacion,PL,estado});
+		barra.pb({nombre,id,generacion,PL,estado});
 	}
   sumidero = (int)(barra.size()+5);
   //~ cout << barra.size() << "\n";
@@ -60,16 +62,22 @@ void leer_barras(vector <BARRA> &barra)
 
 void leer_lineas(vector <LINEA> &linea)
 {
-	int n;
+	//~ cout << "HOLA\n";
+  int n;
 	cin >> n;
 	forn(i,n)
 	{
 		string inicio, fin, estado;
 		int p_max; double aux;
 		cin >> inicio >> fin >> aux >> estado;
+    if(estado == "1") estado = "SI";
+    else estado = "NO";
+    if(inicio == "3376" || fin == "3376") {
+      cout << inicio << " " << fin << " " << aux << "\n";
+    }
     p_max = (int)(floor(aux));
 		linea.pb({inicio,fin,p_max,estado});
-    cap_lineas += p_max;
+    if(p_max < 100000) cap_lineas += p_max;
 	}
 }
 
@@ -91,11 +99,11 @@ void leer_externo(vector <BARRA> &barra, map <string,int> &barra_a_num)
 void mapear(map<string,int> &barra_a_num, map <int,string> &num_a_barra,
 			vector <BARRA> &barra)
 {
-	int ind=1;
-	for(auto u : barra)
-	{
-		barra_a_num[u.nombre]=ind;
-		num_a_barra[ind]=u.nombre;
+	int ind = 1;
+	forr(i,1,barra.size()) {
+    BARRA u = barra[i];
+		barra_a_num[u.nombre] = ind;
+		num_a_barra[ind] = u.nombre;
 		ind++;
 	}
 	
@@ -108,26 +116,27 @@ void crear_grafo(vector <vector<int>> &grafo, vector <BARRA> &barra,
 				 vector <LINEA> &linea, vector <vector<int>> &capacidad,
 				 map <string,int> &barra_a_num)
 {
-	for(auto u : barra)
-	{
+	for(auto u : barra) {
 		int x = barra_a_num[u.nombre];
+    if(x == 0) continue;
+    assert(x != 0);
 		if(u.estado == "SI") {
       grafo[0].pb(x); 
       grafo[(size_t)x].pb(sumidero);
     }
 		if(u.estado == "SI") {
       capacidad[0][(size_t)x] += u.generacion;
-      capacidad[(size_t)x][(size_t)sumidero] = u.PL;
+      capacidad[(size_t)x][(size_t)sumidero] += u.PL;
     }
 	}
-	for(auto u : linea)
-	{
+	for(auto u : linea) {
 		int x = barra_a_num[u.inicio];
 		int y = barra_a_num[u.fin];
+    assert(x != 0); assert(y != 0);
 		grafo[(size_t)x].pb(y);
 		grafo[(size_t)y].pb(x);
-		if(u.estado == "SI") capacidad[(size_t)x][(size_t)y]+=u.p_max;
-		if(u.estado == "SI") capacidad[(size_t)y][(size_t)x]+=u.p_max;
+		if(u.estado == "SI") capacidad[(size_t)x][(size_t)y] += u.p_max;
+		if(u.estado == "SI") capacidad[(size_t)y][(size_t)x] += u.p_max;
 	}
 }
 
@@ -140,20 +149,18 @@ int bfs(int s, int t, vector<int> &parent, vector <vector<int>> &grafo,
     queue<pair<int, int>> q;
     q.push({s, INF});
 
-    while (!q.empty()) 
-    {
+    while(!q.empty()) {
         int cur = q.front().first;
         int flow = q.front().second;
         q.pop();
 
-        for (int next : grafo[(size_t)cur]) 
-        {
-            if (parent[(size_t)next] == -1 
+        for(int next : grafo[(size_t)cur]) {
+            if(parent[(size_t)next] == -1 
             && capacidad[(size_t)cur][(size_t)next]) 
             {
                 parent[(size_t)next] = cur;
                 int new_flow = min(flow,capacidad[(size_t)cur][(size_t)next]);
-                if (next == t) return new_flow;
+                if(next == t) return new_flow;
                 q.push({next, new_flow});
             }
         }
@@ -163,7 +170,7 @@ int bfs(int s, int t, vector<int> &parent, vector <vector<int>> &grafo,
 }
 
 int maxflow(int s, int t, vector <vector<int>> grafo, 
-			vector <vector<int>> capacidad) 
+			vector <vector<int>> &capacidad) 
 {
     int flow = 0;
     vector<int> parent(MAXN);
@@ -208,11 +215,22 @@ void run(vector <vector<int>> &grafo, vector <vector<int>> &capacidad,
 	//~ fclose(stdin);
 }
 
+vector <bool> seen(MAXN,false);
+int check = 0;
+
+void DFS(int v, vector <vector <int> > &grafo) {
+  //~ DBG(v);
+  seen[v] = true; check++;
+  for(int u : grafo[v]) {
+    if(!seen[u]) DFS(u,grafo);
+  }
+}
+
 int main()
 {
 	FIN;
-	freopen("SADI_REMIX", "r",stdin);
-	vector <BARRA> barra;
+	freopen("SADI_REMIX_MAX_MIN", "r",stdin);
+	vector <BARRA> barra(1);
 	vector <LINEA> linea;
 	leer_barras(barra);
 	leer_lineas(linea);
@@ -224,9 +242,24 @@ int main()
 	vector <vector<int>> capacidad(MAXN,vector<int>(MAXN,0));
 	vector <vector<int>> grafo(MAXN);
 	crear_grafo(grafo,barra,linea,capacidad,barra_a_num);
-	fclose(stdin);
+	
+  
+  fclose(stdin);
 	run(grafo,capacidad,num_a_barra);
 	
+  int maximum = 0;
+  forr(i,1,barra.size()) {
+    maximum += capacidad[i][sumidero];
+    if(capacidad[i][sumidero]) {
+      cout << barra[i].nombre << ") " << barra[i].id << " " << maximum << "\n";
+      for(int u : grafo[i]) cout << u << " "; cout << "\n";
+    }
+  }
+  
+  
+  DBG(maximum);
+  
+  
 	
-    return 0;
+  return 0;
 }
